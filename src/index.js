@@ -1,5 +1,7 @@
 'use strict';
+var d3 = require('d3');
 var utils = require('lightning-client-utils');
+var MultiaxisZoom = require('d3-multiaxis-zoom');
 var _ = require('lodash');
 
 var LightningVisualization = require('lightning-visualization');
@@ -13,6 +15,7 @@ var styles = fs.readFileSync(__dirname + '/style.css');
 var Visualization = LightningVisualization.extend({
 
     init: function() {
+        MultiaxisZoom(d3);
         this.margin = {top: 0, right: 0, bottom: 20, left: 45};
         if(_.has(this.data, 'xaxis')) {
             this.margin.bottom = 57;
