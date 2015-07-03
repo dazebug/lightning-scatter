@@ -2,6 +2,7 @@
   "name": "lightning-scatter",
   "version": "0.0.0",
   "dependencies": {
+    "lodash": "^3.8.0",
     "lightning-client-utils": "^0.6.3",
     "lightning-visualization": "^0.0.4"
   },

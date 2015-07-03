@@ -7,23 +7,26 @@ var LightningVisualization = require('lightning-visualization');
 var fs = require('fs');
 var styles = fs.readFileSync(__dirname + '/style.css');
 
-console.log(styles.toString())
-
 /*
  * Extend the base visualization object
  */
 var Visualization = LightningVisualization.extend({
 
     init: function() {
-        this.styles = styles;
         this.margin = {top: 0, right: 0, bottom: 20, left: 45};
+        if(_.has(this.data, 'xaxis')) {
+            this.margin.bottom = 57;
+        }
+        if(_.has(this.data, 'yaxis')) {
+            this.margin.left = 70;
+        }
         this.render();
     },
 
-    /*styles: styles,*/ // optionally pass a string of CSS styles 
+    styles: styles, // optionally pass a string of CSS styles 
 
     render: function() {
-        console.log(this.data)
+
         var data = this.data
         var height = this.height
         var width = this.width
