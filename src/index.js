@@ -14,6 +14,11 @@ var styles = fs.readFileSync(__dirname + '/style.css');
  */
 var Visualization = LightningVisualization.extend({
 
+    defaultFill: '#deebfa',
+    defaultStroke: '#68a1e5',
+    defaultSize: 8,
+    defaultAlpha: 0.9,
+
     init: function() {
         MultiaxisZoom(d3);
         this.margin = {top: 0, right: 0, bottom: 20, left: 45};
