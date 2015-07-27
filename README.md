@@ -1,6 +1,6 @@
 # Lightning Scatter
 
-Scatter plot for *Lightning*
+Scatter plot for **Lightning**
 
 Documentation and examples at [lightning-viz.org](http://lightning-viz.org/docuemtation)
 
