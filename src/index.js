@@ -7,17 +7,28 @@ var _ = require('lodash');
 var LightningVisualization = require('lightning-visualization');
  
 var fs = require('fs');
-var styles = fs.readFileSync(__dirname + '/style.css');
+var css = fs.readFileSync(__dirname + '/style.css');
 
 /*
  * Extend the base visualization object
  */
 var Visualization = LightningVisualization.extend({
 
-    defaultFill: '#deebfa',
-    defaultStroke: '#68a1e5',
-    defaultSize: 8,
-    defaultAlpha: 0.9,
+    getDefaultStyles: function() {
+        return {
+            fill: '#deebfa',
+            stroke: '#68a1e5',
+            size: 8,
+            alpha: 0.9
+        }
+    },
+
+    getDefaultOptions: function() {
+        return {
+            brush: true,
+            select: true
+        }
+    },
 
     init: function() {
         MultiaxisZoom(d3);
@@ -31,14 +42,14 @@ var Visualization = LightningVisualization.extend({
         this.render();
     },
 
-    styles: styles, // optionally pass a string of CSS styles 
+    css: css,
 
     render: function() {
 
         var data = this.data
         var height = this.height
         var width = this.width
-        var opts = this.opts
+        var options = this.getDefaultOptions()
         var selector = this.selector
         var margin = this.margin
         var self = this
@@ -70,70 +81,8 @@ var Visualization = LightningVisualization.extend({
             .y(this.y)
             .on('zoom', zoomed);
 
-        function nearestPoint(points, target, xscale, yscale) {
-            // find point in points nearest to target
-            // using scales x and y
-            // point must have attrs x, y, and s
-            var i = 0, count = 0;
-            var found, dist, n, p;
-            while (count == 0 & i < points.length) {
-                p = points[i]
-                dist = Math.sqrt(Math.pow(xscale(p.x) - target[0], 2) + Math.pow(yscale(p.y) - target[1], 2))
-                if (dist <= p.s) {
-                    found = p
-                    count = 1
-                }
-                i++;
-            }
-            return found
-        }
-
-        var shiftKey;
-
-        var selected = [];
-        var highlighted = [];
-
-        var brush = d3.svg.brush()
-            .x(this.x)
-            .y(this.y)
-            .on("brushstart", function() {
-                // remove any highlighting
-                highlighted = []
-                // select a point if we click without extent
-                var pos = d3.mouse(this)
-                var found = nearestPoint(points, pos, self.x, self.y)
-                if (found) {
-                    if (_.indexOf(selected, found.i) == -1) {
-                        selected.push(found.i)
-                    } else {
-                        _.remove(selected, function(d) {return d == found.i})
-                    }
-                    redraw();
-                }
-            })
-            .on("brush", function() {
-                // select points within extent
-                var extent = d3.event.target.extent();
-                if (Math.abs(extent[0][0] - extent[1][0]) > 0 & Math.abs(extent[0][1] - extent[1][1]) > 0) {
-                    selected = []
-                    _.forEach(points, function(p) {
-                        if (_.indexOf(selected, p.i) == -1) {
-                            var cond1 = (p.x > extent[0][0] & p.x < extent[1][0])
-                            var cond2 = (p.y > extent[0][1] & p.y < extent[1][1])
-                            if (cond1 & cond2) {
-                                selected.push(p.i)
-                            }
-                        }
-                    })
-                }
-                redraw();
-            })
-            .on("brushend", function() {
-                console.log("got user data")
-                getUserData()
-                d3.event.target.clear();
-                d3.select(this).call(d3.event.target);
-            })
+        var highlighted = []
+        var selected = []
 
         var container = d3.select(selector)
             .append('div')
@@ -148,9 +97,9 @@ var Visualization = LightningVisualization.extend({
             .style('margin', margin.top + 'px ' + margin.left + 'px')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .call(this.zoom)
-            .on("click", mouseHandler)
             .on("dblclick.zoom", null)
-            .node().getContext("2d")
+
+        var ctx = canvas.node().getContext("2d")
 
         var svg = container
             .append('svg:svg')
@@ -161,39 +110,110 @@ var Visualization = LightningVisualization.extend({
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .call(this.zoom)
 
-        var brushrect = container
-            .append('svg:svg')
-            .attr('class', 'scatter-plot brush-container')
-            .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
-        .append("g")
-            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
-            .attr('class', 'brush')
-            .call(brush)
-
         svg.append('rect')
             .attr('width', width)
             .attr('height', height)
             .attr('class', 'scatter-plot rect');
 
-        d3.selectAll('.brush .background')
-            .style('cursor', 'default')
-        d3.selectAll('.brush')
-            .style('pointer-events', 'none')
+        // setup brushing
+        if (options.brush) {
 
-        function mouseHandler() {
-            if (d3.event.defaultPrevented) return;
-            var pos = d3.mouse(this)
-            var found = nearestPoint(points, pos, self.x, self.y)
-            if (found) {
-                highlighted = []
-                highlighted.push(found.i)
-                self.emit('hover', found);
-            } else {
-                highlighted = []
+            var shiftKey
+
+            var brush = d3.svg.brush()
+                .x(this.x)
+                .y(this.y)
+                .on("brushstart", function() {
+                    // remove any highlighting
+                    highlighted = []
+                    // select a point if we click without extent
+                    var pos = d3.mouse(this)
+                    var found = utils.nearestPoint(self.data.points, pos, self.x, self.y)
+                    if (found) {
+                        if (_.indexOf(selected, found.i) == -1) {
+                            selected.push(found.i)
+                        } else {
+                            _.remove(selected, function(d) {return d == found.i})
+                        }
+                        redraw();
+                    }
+                })
+                .on("brush", function() {
+                    // select points within extent
+                    var extent = d3.event.target.extent();
+                    if (Math.abs(extent[0][0] - extent[1][0]) > 0 & Math.abs(extent[0][1] - extent[1][1]) > 0) {
+                        selected = []
+                        _.forEach(points, function(p) {
+                            if (_.indexOf(selected, p.i) == -1) {
+                                var cond1 = (p.x > extent[0][0] & p.x < extent[1][0])
+                                var cond2 = (p.y > extent[0][1] & p.y < extent[1][1])
+                                if (cond1 & cond2) {
+                                    selected.push(p.i)
+                                }
+                            }
+                        })
+                    }
+                    redraw();
+                })
+                .on("brushend", function() {
+                    console.log("got user data")
+                    getUserData()
+                    d3.event.target.clear();
+                    d3.select(this).call(d3.event.target);
+                })
+
+            var brushrect = container
+                .append('svg:svg')
+                .attr('class', 'scatter-plot brush-container')
+                .attr('width', width + margin.left + margin.right)
+                .attr('height', height + margin.top + margin.bottom)
+            .append("g")
+                .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+                .attr('class', 'brush')
+                .call(brush)
+
+            d3.selectAll('.brush .background')
+                .style('cursor', 'default')
+            d3.selectAll('.brush')
+                .style('pointer-events', 'none')
+
+            d3.select(selector).on("keydown", function() {
+                shiftKey = d3.event.shiftKey;
+                if (shiftKey) {
+                    d3.selectAll('.brush').style('pointer-events', 'all')
+                    d3.selectAll('.brush .background').style('cursor', 'crosshair')
+                }
+            });
+
+            d3.select(selector).on("keyup", function() {
+                if (shiftKey) {
+                    d3.selectAll('.brush').style('pointer-events', 'none')
+                    d3.selectAll('.brush .background').style('cursor', 'default')
+                }
+                shiftKey = false
+            });
+
+        }
+
+        // setup mouse selections
+        if (options.select) {
+
+            function mouseHandler() {
+                if (d3.event.defaultPrevented) return;
+                var pos = d3.mouse(this)
+                var found = utils.nearestPoint(points, pos, self.x, self.y)
+                if (found) {
+                    highlighted = []
+                    highlighted.push(found.i)
+                    self.emit('hover', found);
+                } else {
+                    highlighted = []
+                }
+                selected = []
+                redraw();
             }
-            selected = []
-            redraw();
+            canvas.on("click", mouseHandler)
+
         }
 
         var makeXAxis = function () {
@@ -242,28 +262,19 @@ var Visualization = LightningVisualization.extend({
                     .tickSize(-width, 0, 0)
                     .tickFormat(''));
 
-        _.map(points, function(p) {
-            p.s = p.s ? p.s : self.defaultSize
-            p.cfill = p.c ? p.c : self.defaultFill
-            p.cstroke = p.c ? p.c.darker(0.75) : self.defaultStroke
-            return p
-        })
-
         // automatically set line width based on number of points
-        var lineWidth = points.length > 500 ? 1 : 1.1
-
-        draw();
+        var strokeWidth = points.length > 500 ? 1 : 1.1
 
         function redraw() {
-            canvas.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom);
+            ctx.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom)
             draw()
         }
 
         function draw() {
 
-            var cx, cy, s;
+            var cx, cy;
 
-            _.forEach(points, function(p) {
+            _.forEach(self.data.points, function(p) {
                 var alpha, stroke, fill;
                 if (selected.length > 0) {
                     if (_.indexOf(selected, p.i) >= 0) {
@@ -272,22 +283,22 @@ var Visualization = LightningVisualization.extend({
                         alpha = 0.1
                     }
                 } else {
-                    alpha = p.a ? p.a : self.defaultAlpha
+                    alpha = p.a
                 }
                 if (_.indexOf(highlighted, p.i) >= 0) {
-                    fill = d3.rgb(d3.hsl(p.cfill).darker(0.75))
+                    fill = d3.rgb(d3.hsl(p.c).darker(0.75))
                 } else {
-                    fill = p.cfill
+                    fill = p.c
                 }
                 cx = self.x(p.x);
                 cy = self.y(p.y);
-                canvas.beginPath();
-                canvas.arc(cx, cy, p.s, 0, 2 * Math.PI, false);
-                canvas.fillStyle = utils.buildRGBA(fill, alpha)
-                canvas.lineWidth = lineWidth
-                canvas.strokeStyle = utils.buildRGBA(p.cstroke, alpha)
-                canvas.fill()
-                canvas.stroke()
+                ctx.beginPath();
+                ctx.arc(cx, cy, p.s, 0, 2 * Math.PI, false);
+                ctx.fillStyle = utils.buildRGBA(fill, alpha)
+                ctx.strokeWidth = strokeWidth
+                ctx.strokeStyle = utils.buildRGBA(p.k, alpha)
+                ctx.fill()
+                ctx.stroke()
             })
               
         }
@@ -309,7 +320,7 @@ var Visualization = LightningVisualization.extend({
 
         function zoomed() {
 
-            canvas.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom);
+            ctx.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom);
             updateAxis();
             draw();
         }
@@ -343,22 +354,6 @@ var Visualization = LightningVisualization.extend({
 
         d3.select(selector).attr("tabindex", -1)
 
-        d3.select(selector).on("keydown", function() {
-            shiftKey = d3.event.shiftKey;
-            if (shiftKey) {
-                d3.selectAll('.brush').style('pointer-events', 'all')
-                d3.selectAll('.brush .background').style('cursor', 'crosshair')
-            }
-        });
-
-        d3.select(selector).on("keyup", function() {
-            if (shiftKey) {
-                d3.selectAll('.brush').style('pointer-events', 'none')
-                d3.selectAll('.brush .background').style('cursor', 'default')
-            }
-            shiftKey = false
-        });
-
         function getUserData() {
 
             utils.sendCommMessage(self, 'selection', selected);
@@ -374,9 +369,10 @@ var Visualization = LightningVisualization.extend({
                 }
             });
         }
+
+        draw();
         
-        this.svg = svg;
-        this.points = points;
+        this.redraw = redraw;
 
     },
 
@@ -385,14 +381,22 @@ var Visualization = LightningVisualization.extend({
         var retColor = utils.getColorFromData(data)
         var retSize = data.size || []
         var retAlpha = data.alpha || []
+        var styles = this.getDefaultStyles()
+        var self = this
+
+        var c, s, a
 
         data.points = data.points.map(function(d, i) {
             d.x = d[0]
             d.y = d[1]
             d.i = i
-            d.c = retColor.length > 1 ? retColor[i] : retColor[0]
-            d.s = retSize.length > 1 ? retSize[i] : retSize[0]
-            d.a = retAlpha.length > 1 ? retAlpha[i] : retAlpha[0]
+            c = retColor.length > 1 ? retColor[i] : retColor[0]
+            s = retSize.length > 1 ? retSize[i] : retSize[0]
+            a = retAlpha.length > 1 ? retAlpha[i] : retAlpha[0]
+            d.c = c ? c : styles.fill
+            d.s = s ? s : styles.size
+            d.k = c ? c.darker(0.75) : styles.stroke 
+            d.a = a ? a : styles.alpha
             return d
         })
 
@@ -401,14 +405,12 @@ var Visualization = LightningVisualization.extend({
 
     updateData: function(formattedData) {
         this.data = formattedData;
-        // TODO: re-render the visualization
+        this.redraw() 
     },
 
     appendData: function(formattedData) {        
-        // TODO: update this.data to include the newly
-        //       added formattedData
-
-        // TODO: re-render the visualization
+        this.data.points = this.data.points.concat(formattedData.points)
+        this.redraw() 
     }
 
 });
