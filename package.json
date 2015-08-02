@@ -24,5 +24,7 @@
       "brfs"
     ]
   },
-  "lightning": {}
+  "lightning": {
+    "name": "scatter"
+  }
 }
