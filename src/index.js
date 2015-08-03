@@ -16,7 +16,7 @@ var Visualization = LightningVisualization.extend({
 
     getDefaultStyles: function() {
         return {
-            fill: '#deebfa',
+            color: '#deebfa',
             stroke: '#68a1e5',
             size: 8,
             alpha: 0.9
@@ -49,7 +49,7 @@ var Visualization = LightningVisualization.extend({
         var data = this.data
         var height = this.height
         var width = this.width
-        var options = this.getDefaultOptions()
+        var options = this.options
         var selector = this.selector
         var margin = this.margin
         var self = this
@@ -70,11 +70,11 @@ var Visualization = LightningVisualization.extend({
 
         this.x = d3.scale.linear()
             .domain([xDomain[0] - xRange * 0.1, xDomain[1] + xRange * 0.1])
-            .range([0, width]);
+            .range([0, width - margin.left - margin.right]);
 
         this.y = d3.scale.linear()
             .domain([yDomain[0] - yRange * 0.1, yDomain[1] + yRange * 0.1])
-            .range([height , 0]);
+            .range([height - margin.top - margin.bottom, 0]);
 
         this.zoom = d3.behavior.zoom()
             .x(this.x)
@@ -86,16 +86,18 @@ var Visualization = LightningVisualization.extend({
 
         var container = d3.select(selector)
             .append('div')
-            .style('width', width + margin.left + margin.right + "px")
-            .style('height', height + margin.top + margin.bottom + "px")
+            .style('width', width + "px")
+            .style('height', height + "px")
 
         var canvas = container
             .append('canvas')
             .attr('class', 'scatter-plot canvas')
-            .attr('width', width)
-            .attr('height', height)
-            .style('margin', margin.top + 'px ' + margin.left + 'px')
-            .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
+            .attr('width', width - margin.left - margin.right)
+            .attr('height', height - margin.top - margin.bottom)
+            .style('margin-left', margin.left + 'px')
+            .style('margin-right', margin.right + 'px')
+            .style('margin-top', margin.top + 'px')
+            .style('margin-bottom', margin.bottom + 'px')
             .call(this.zoom)
             .on("dblclick.zoom", null)
 
@@ -104,15 +106,15 @@ var Visualization = LightningVisualization.extend({
         var svg = container
             .append('svg:svg')
             .attr('class', 'scatter-plot svg')
-            .attr('width', width + margin.left + margin.right)
-            .attr('height', height + margin.top + margin.bottom)
+            .attr('width', width)
+            .attr('height', height)
             .append('svg:g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .call(this.zoom)
 
         svg.append('rect')
-            .attr('width', width)
-            .attr('height', height)
+            .attr('width', width - margin.left - margin.right)
+            .attr('height', height - margin.top - margin.bottom)
             .attr('class', 'scatter-plot rect');
 
         // setup brushing
@@ -237,7 +239,7 @@ var Visualization = LightningVisualization.extend({
 
         svg.append('g')
             .attr('class', 'x axis')
-            .attr('transform', 'translate(0, ' + height + ')')
+            .attr('transform', 'translate(0, ' + (height - margin.top - margin.bottom) + ')')
             .call(self.xAxis);
 
         this.yAxis = d3.svg.axis()
@@ -251,15 +253,15 @@ var Visualization = LightningVisualization.extend({
 
         svg.append('g')
             .attr('class', 'x grid')
-            .attr('transform', 'translate(0,' + height + ')')
+            .attr('transform', 'translate(0,' + (height - margin.top - margin.bottom) + ')')
             .call(makeXAxis()
-                    .tickSize(-height, 0, 0)
+                    .tickSize(-(height - margin.top - margin.bottom), 0, 0)
                     .tickFormat(''));
 
         svg.append('g')
             .attr('class', 'y grid')
             .call(makeYAxis()
-                    .tickSize(-width, 0, 0)
+                    .tickSize(-(width - margin.left - margin.right), 0, 0)
                     .tickFormat(''));
 
         // automatically set line width based on number of points
@@ -309,18 +311,18 @@ var Visualization = LightningVisualization.extend({
             svg.select('.y.axis').call(self.yAxis);
             svg.select('.x.grid')
                 .call(makeXAxis()
-                    .tickSize(-height, 0, 0)
+                    .tickSize(-(height - margin.top - margin.bottom), 0, 0)
                     .tickFormat(''));
             svg.select('.y.grid')
                 .call(makeYAxis()
-                        .tickSize(-width, 0, 0)
+                        .tickSize(-(width - margin.left - margin.right), 0, 0)
                         .tickFormat(''));
 
         }
 
         function zoomed() {
 
-            ctx.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom);
+            ctx.clearRect(0, 0, width - margin.left - margin.right, height - margin.top - margin.bottom);
             updateAxis();
             draw();
         }
@@ -333,8 +335,8 @@ var Visualization = LightningVisualization.extend({
             svg.append("text")
                 .attr("class", "x label")
                 .attr("text-anchor", "middle")
-                .attr("x", width / 2)
-                .attr("y", height + margin.bottom - 5)
+                .attr("x", (width - margin.left - margin.right) / 2)
+                .attr("y", height - margin.top)
                 .text(txt);
         }
         if(_.has(this.data, 'yaxis')) {
@@ -347,8 +349,8 @@ var Visualization = LightningVisualization.extend({
                 .attr("class", "y label")
                 .attr("text-anchor", "middle")
                 .attr("transform", "rotate(-90)")
-                .attr("x", - height / 2)
-                .attr("y", -50)
+                .attr("x", - (height - margin.top - margin.bottom) / 2)
+                .attr("y", -margin.left + 20)
                 .text(txt);
         }
 
@@ -381,7 +383,7 @@ var Visualization = LightningVisualization.extend({
         var retColor = utils.getColorFromData(data)
         var retSize = data.size || []
         var retAlpha = data.alpha || []
-        var styles = this.getDefaultStyles()
+        var styles = this.styles
         var self = this
 
         var c, s, a
@@ -393,7 +395,7 @@ var Visualization = LightningVisualization.extend({
             c = retColor.length > 1 ? retColor[i] : retColor[0]
             s = retSize.length > 1 ? retSize[i] : retSize[0]
             a = retAlpha.length > 1 ? retAlpha[i] : retAlpha[0]
-            d.c = c ? c : styles.fill
+            d.c = c ? c : styles.color
             d.s = s ? s : styles.size
             d.k = c ? c.darker(0.75) : styles.stroke 
             d.a = a ? a : styles.alpha
