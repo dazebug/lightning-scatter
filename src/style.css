@@ -1,3 +1,5 @@
+@import url(http://fonts.googleapis.com/css?family=Open+Sans);
+
 .scatter-plot {
     position: relative;
 }
@@ -68,4 +70,9 @@
     font-family: monospace;
     font-size: 14px;
     font-weight: normal;
+}
+
+.scatter-plot .label {
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
 }

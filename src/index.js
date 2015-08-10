@@ -27,12 +27,12 @@ var Visualization = LightningVisualization.extend({
 
     init: function() {
         MultiaxisZoom(d3);
-        this.margin = {top: 0, right: 0, bottom: 20, left: 45};
+        this.margin = {top: 0, right: 0, bottom: 20, left: 60};
         if(_.has(this.data, 'xaxis')) {
             this.margin.bottom = 57;
         }
         if(_.has(this.data, 'yaxis')) {
-            this.margin.left = 70;
+            this.margin.left = 85;
         }
         this.render();
     },
@@ -158,7 +158,7 @@ var Visualization = LightningVisualization.extend({
                     getUserData();
                     d3.event.target.clear();
                     d3.select(this).call(d3.event.target);
-                })
+                });
 
             container
                 .append('svg:svg')
@@ -228,10 +228,15 @@ var Visualization = LightningVisualization.extend({
                 .ticks(5);
         };
 
+        function customTickFormat(d) {
+            return parseFloat(d3.format(".3f")(d))
+        }
+
         this.xAxis = d3.svg.axis()
             .scale(self.x)
             .orient('bottom')
-            .ticks(5);
+            .ticks(5)
+            .tickFormat(customTickFormat);
 
         svg.append('g')
             .attr('class', 'x axis')
@@ -241,7 +246,8 @@ var Visualization = LightningVisualization.extend({
         this.yAxis = d3.svg.axis()
             .scale(self.y)
             .orient('left')
-            .ticks(5);
+            .ticks(5)
+            .tickFormat(customTickFormat);
 
         svg.append('g')
             .attr('class', 'y axis')
@@ -332,7 +338,7 @@ var Visualization = LightningVisualization.extend({
                 .attr("class", "x label")
                 .attr("text-anchor", "middle")
                 .attr("x", (width - margin.left - margin.right) / 2)
-                .attr("y", height - margin.top)
+                .attr("y", height - margin.top - 5)
                 .text(txt);
         }
         if(_.has(this.data, 'yaxis')) {
