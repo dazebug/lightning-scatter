@@ -21,7 +21,8 @@ var Visualization = LightningVisualization.extend({
     getDefaultOptions: function() {
         return {
             brush: true,
-            select: true
+            select: true,
+            tooltips: true
         }
     },
 
@@ -48,8 +49,6 @@ var Visualization = LightningVisualization.extend({
         var selector = this.selector;
         var margin = this.margin;
         var self = this;
-
-        this.$el = $(selector).first();
 
         var points = data.points;
 
@@ -81,8 +80,10 @@ var Visualization = LightningVisualization.extend({
 
         var container = d3.select(selector)
             .append('div')
-            .style('width', width + "px")
-            .style('height', height + "px");
+            .style('width', width + 'px')
+            .style('position', 'relative')
+            .style('overflow', 'hidden')
+            .style('height', height + 'px');
 
         var canvas = container
             .append('canvas')
@@ -94,11 +95,11 @@ var Visualization = LightningVisualization.extend({
             .style('margin-top', margin.top + 'px')
             .style('margin-bottom', margin.bottom + 'px')
             .call(this.zoom)
-            .on("dblclick.zoom", null);
+            .on('dblclick.zoom', null);
 
         var ctx = canvas
             .node()
-            .getContext("2d");
+            .getContext('2d');
 
         var svg = container
             .append('svg:svg')
@@ -122,7 +123,7 @@ var Visualization = LightningVisualization.extend({
             var brush = d3.svg.brush()
                 .x(this.x)
                 .y(this.y)
-                .on("brushstart", function() {
+                .on('brushstart', function() {
                     // remove any highlighting
                     highlighted = [];
                     // select a point if we click without extent
@@ -130,14 +131,14 @@ var Visualization = LightningVisualization.extend({
                     var found = utils.nearestPoint(self.data.points, pos, self.x, self.y);
                     if (found) {
                         if (_.indexOf(selected, found.i) == -1) {
-                            selected.push(found.i)
+                            selected.push(found.i);
                         } else {
-                            _.remove(selected, function(d) {return d == found.i})
+                            _.remove(selected, function(d) { return d == found.i; });
                         }
                         redraw();
                     }
                 })
-                .on("brush", function() {
+                .on('brush', function() {
                     // select points within extent
                     var extent = d3.event.target.extent();
                     if (Math.abs(extent[0][0] - extent[1][0]) > 0 & Math.abs(extent[0][1] - extent[1][1]) > 0) {
@@ -147,14 +148,14 @@ var Visualization = LightningVisualization.extend({
                                 var cond1 = (p.x > extent[0][0] & p.x < extent[1][0]);
                                 var cond2 = (p.y > extent[0][1] & p.y < extent[1][1]);
                                 if (cond1 && cond2) {
-                                    selected.push(p.i)
+                                    selected.push(p.i);
                                 }
                             }
-                        })
+                        });
                     }
                     redraw();
                 })
-                .on("brushend", function() {
+                .on('brushend', function() {
                     getUserData();
                     d3.event.target.clear();
                     d3.select(this).call(d3.event.target);
@@ -165,7 +166,7 @@ var Visualization = LightningVisualization.extend({
                 .attr('class', 'scatter-plot brush-container')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
-                .append("g")
+                .append('g')
                 .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
                 .attr('class', 'brush')
                 .call(brush);
@@ -176,20 +177,20 @@ var Visualization = LightningVisualization.extend({
             d3.selectAll('.brush')
                 .style('pointer-events', 'none');
 
-            d3.select(selector).on("keydown", function() {
+            d3.select(selector).on('keydown', function() {
                 shiftKey = d3.event.shiftKey;
                 if (shiftKey) {
                     d3.selectAll('.brush').style('pointer-events', 'all');
-                    d3.selectAll('.brush .background').style('cursor', 'crosshair')
+                    d3.selectAll('.brush .background').style('cursor', 'crosshair');
                 }
             });
 
-            d3.select(selector).on("keyup", function() {
+            d3.select(selector).on('keyup', function() {
                 if (shiftKey) {
                     d3.selectAll('.brush').style('pointer-events', 'none');
-                    d3.selectAll('.brush .background').style('cursor', 'default')
+                    d3.selectAll('.brush .background').style('cursor', 'default');
                 }
-                shiftKey = false
+                shiftKey = false;
             });
 
         }
@@ -203,7 +204,8 @@ var Visualization = LightningVisualization.extend({
                 highlighted.push(found.i);
                 self.emit('hover', found);
             } else {
-                highlighted = []
+                highlighted = [];
+                self.removeTooltip();
             }
             selected = [];
             redraw();
@@ -211,7 +213,7 @@ var Visualization = LightningVisualization.extend({
 
         // setup mouse selections
         if (options.select) {
-            canvas.on("click", mouseHandler)
+            canvas.on('click', mouseHandler);
         }
 
         var makeXAxis = function () {
@@ -229,7 +231,7 @@ var Visualization = LightningVisualization.extend({
         };
 
         function customTickFormat(d) {
-            return parseFloat(d3.format(".3f")(d))
+            return parseFloat(d3.format('.3f')(d));
         }
 
         this.xAxis = d3.svg.axis()
@@ -302,9 +304,13 @@ var Visualization = LightningVisualization.extend({
                 ctx.strokeWidth = strokeWidth;
                 ctx.strokeStyle = utils.buildRGBA(p.k, alpha);
                 ctx.fill();
-                ctx.stroke()
-            })
-              
+                ctx.stroke();
+            });
+
+            if(highlighted.length) {
+                console.log('highlighted len')
+                self.showTooltip(self.data.points[highlighted[0]]);
+            }
         }
 
         function updateAxis() {
@@ -334,11 +340,11 @@ var Visualization = LightningVisualization.extend({
             if(_.isArray(txt)) {
                 txt = txt[0];
             }
-            svg.append("text")
-                .attr("class", "x label")
-                .attr("text-anchor", "middle")
-                .attr("x", (width - margin.left - margin.right) / 2)
-                .attr("y", height - margin.top - 5)
+            svg.append('text')
+                .attr('class', 'x label')
+                .attr('text-anchor', 'middle')
+                .attr('x', (width - margin.left - margin.right) / 2)
+                .attr('y', height - margin.top - 5)
                 .text(txt);
         }
         if(_.has(this.data, 'yaxis')) {
@@ -347,16 +353,16 @@ var Visualization = LightningVisualization.extend({
                 txt = txt[0];
             }
 
-            svg.append("text")
-                .attr("class", "y label")
-                .attr("text-anchor", "middle")
-                .attr("transform", "rotate(-90)")
-                .attr("x", - (height - margin.top - margin.bottom) / 2)
-                .attr("y", -margin.left + 20)
+            svg.append('text')
+                .attr('class', 'y label')
+                .attr('text-anchor', 'middle')
+                .attr('transform', 'rotate(-90)')
+                .attr('x', - (height - margin.top - margin.bottom) / 2)
+                .attr('y', -margin.left + 20)
                 .text(txt);
         }
 
-        d3.select(selector).attr("tabindex", -1);
+        d3.select(selector).attr('tabindex', -1);
 
         function getUserData() {
 
@@ -400,7 +406,8 @@ var Visualization = LightningVisualization.extend({
             d.s = s ? s : styles.size;
             d.k = c ? c.darker(0.75) : styles.stroke;
             d.a = a ? a : styles.alpha;
-            return d
+            d.label = (data.labels || []).length > i ? data.labels[i] : null;
+            return d;
         });
 
         return data
@@ -414,6 +421,57 @@ var Visualization = LightningVisualization.extend({
     appendData: function(formattedData) {        
         this.data.points = this.data.points.concat(formattedData.points);
         this.redraw();
+    },
+
+    getLabelForDataPoint: function(d) {
+        if(!_.isNull(d.label) && !_.isUndefined(d.label)) {
+            return d.label;
+        }
+        return ('x: ' + d3.round(d.x, 2) + '<br>' + 'y: ' + d3.round(d.y, 2));
+    },
+
+    buildTooltip: function(d) {
+        
+        var label = this.getLabelForDataPoint(d);
+
+        this.removeTooltip();
+
+        var cx = this.x(d.x);
+        var cy = this.y(d.y);
+        if(cx < 0 || cx > (this.width - this.margin.left - this.margin.right)) {
+            return;
+        }
+        if(cy < 0 || cy > (this.height - this.margin.top - this.margin.bottom)) {
+            return;
+        }
+
+        this.tooltipEl = document.createElement('div');
+        
+        this.tooltipEl.className = 'lightning-tooltip';        
+        this.tooltipEl.innerHTML = label;
+        this.tooltipEl.style.left = (this.x(d.x) + this.margin.left - 50) + 'px';
+        this.tooltipEl.style.bottom = (this.height - this.y(d.y) + 20) + 'px';
+    },
+
+    renderTooltip: function() {
+        var container = this.qwery(this.selector + ' div')[0];
+        container.appendChild(this.tooltipEl);
+
+    },
+
+    showTooltip: function(d) {
+        if(!this.options.tooltips) {
+            return;
+        }
+        this.buildTooltip(d);
+        this.renderTooltip();
+    },
+
+    removeTooltip: function() {
+        if(this.tooltipEl) {
+            this.tooltipEl.remove();
+            this.tooltipEl = null;
+        }
     }
 
 });
