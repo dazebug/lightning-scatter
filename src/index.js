@@ -308,7 +308,6 @@ var Visualization = LightningVisualization.extend({
             });
 
             if(highlighted.length) {
-                console.log('highlighted len')
                 self.showTooltip(self.data.points[highlighted[0]]);
             }
         }
@@ -433,7 +432,6 @@ var Visualization = LightningVisualization.extend({
     buildTooltip: function(d) {
         
         var label = this.getLabelForDataPoint(d);
-
         this.removeTooltip();
 
         var cx = this.x(d.x);
@@ -454,8 +452,11 @@ var Visualization = LightningVisualization.extend({
     },
 
     renderTooltip: function() {
+
         var container = this.qwery(this.selector + ' div')[0];
-        container.appendChild(this.tooltipEl);
+        if(this.tooltipEl && container) {
+            container.appendChild(this.tooltipEl);
+        }
 
     },
 
