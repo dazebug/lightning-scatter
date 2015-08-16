@@ -1,8 +1,5 @@
-[
-	{
-		"brush": true,
-		"tooltips": true,
-		"zoom": true
-	}
-
-]
+{
+	"brush": true,
+	"tooltips": true,
+	"zoom": true
+}
