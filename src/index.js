@@ -75,10 +75,6 @@ var Visualization = LightningVisualization.extend({
             .y(this.y)
             .on('zoom', zoomed);
 
-        if (!options.zoom) {
-            this.zoom.scaleExtent([1,1])
-        }
-
         var highlighted = [];
         var selected = [];
 
@@ -113,6 +109,13 @@ var Visualization = LightningVisualization.extend({
             .append('svg:g')
             .attr('transform', 'translate(' + margin.left + ',' + margin.top + ')')
             .call(this.zoom);
+
+        if (!self.options.zoom) {
+            svg.on("wheel.zoom", null);
+            svg.on("mousewheel.zoom", null);
+            canvas.on("wheel.zoom", null);
+            canvas.on("mousewheel.zoom", null);
+        }
 
         svg.append('rect')
             .attr('width', width - margin.left - margin.right)
