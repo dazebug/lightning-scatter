@@ -21,7 +21,8 @@ var Visualization = LightningVisualization.extend({
     getDefaultOptions: function() {
         return {
             brush: true,
-            tooltips: true
+            tooltips: true,
+            zoom: true
         }
     },
 
@@ -73,6 +74,10 @@ var Visualization = LightningVisualization.extend({
             .x(this.x)
             .y(this.y)
             .on('zoom', zoomed);
+
+        if (!options.zoom) {
+            this.zoom.scaleExtent([1,1])
+        }
 
         var highlighted = [];
         var selected = [];

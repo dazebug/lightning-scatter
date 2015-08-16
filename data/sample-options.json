@@ -1,7 +1,8 @@
 [
 	{
-		"brush": "true",
-		"tooltips": "true"
+		"brush": true,
+		"tooltips": true,
+		"zoom": true
 	}
 
 ]
