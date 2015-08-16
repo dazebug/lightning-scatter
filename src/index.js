@@ -21,7 +21,6 @@ var Visualization = LightningVisualization.extend({
     getDefaultOptions: function() {
         return {
             brush: true,
-            select: true,
             tooltips: true
         }
     },
@@ -126,6 +125,9 @@ var Visualization = LightningVisualization.extend({
                 .on('brushstart', function() {
                     // remove any highlighting
                     highlighted = [];
+                    if (options.tooltips) {
+                        self.removeTooltip();
+                    }
                     // select a point if we click without extent
                     var pos = d3.mouse(this);
                     var found = utils.nearestPoint(self.data.points, pos, self.x, self.y);
@@ -195,24 +197,23 @@ var Visualization = LightningVisualization.extend({
 
         }
 
-        function mouseHandler() {
-            if (d3.event.defaultPrevented) return;
-            var pos = d3.mouse(this);
-            var found = utils.nearestPoint(points, pos, self.x, self.y);
-            if (found) {
-                highlighted = [];
-                highlighted.push(found.i);
-                self.emit('hover', found);
-            } else {
-                highlighted = [];
-                self.removeTooltip();
+        // setup tooltips
+        if (options.tooltips) {
+            var mouseHandler = function() {
+                if (d3.event.defaultPrevented) return;
+                var pos = d3.mouse(this);
+                var found = utils.nearestPoint(points, pos, self.x, self.y);
+                if (found) {
+                    highlighted = [];
+                    highlighted.push(found.i);
+                    self.emit('hover', found);
+                } else {
+                    highlighted = [];
+                    self.removeTooltip();
+                }
+                selected = [];
+                redraw();
             }
-            selected = [];
-            redraw();
-        }
-
-        // setup mouse selections
-        if (options.select) {
             canvas.on('click', mouseHandler);
         }
 
@@ -291,7 +292,7 @@ var Visualization = LightningVisualization.extend({
                 } else {
                     alpha = p.a
                 }
-                if (_.indexOf(highlighted, p.i) >= 0) {
+                if (options.tooltips && _.indexOf(highlighted, p.i) >= 0) {
                     fill = d3.rgb(d3.hsl(p.c).darker(0.75))
                 } else {
                     fill = p.c
@@ -307,7 +308,7 @@ var Visualization = LightningVisualization.extend({
                 ctx.stroke();
             });
 
-            if(highlighted.length) {
+            if(options.tooltips && highlighted.length) {
                 self.showTooltip(self.data.points[highlighted[0]]);
             }
         }
@@ -405,11 +406,12 @@ var Visualization = LightningVisualization.extend({
             d.s = s ? s : styles.size;
             d.k = c ? c.darker(0.75) : styles.stroke;
             d.a = a ? a : styles.alpha;
-            d.label = (data.labels || []).length > i ? data.labels[i] : null;
+            d.l = (data.labels || []).length > i ? data.labels[i] : null;
             return d;
         });
 
         return data
+
     },
 
     updateData: function(formattedData) {
@@ -423,14 +425,14 @@ var Visualization = LightningVisualization.extend({
     },
 
     getLabelForDataPoint: function(d) {
-        if(!_.isNull(d.label) && !_.isUndefined(d.label)) {
-            return d.label;
+        if(!_.isNull(d.l) && !_.isUndefined(d.l)) {
+            return d.l;
         }
         return ('x: ' + d3.round(d.x, 2) + '<br>' + 'y: ' + d3.round(d.y, 2));
     },
 
     buildTooltip: function(d) {
-        
+
         var label = this.getLabelForDataPoint(d);
         this.removeTooltip();
 
@@ -444,26 +446,35 @@ var Visualization = LightningVisualization.extend({
         }
 
         this.tooltipEl = document.createElement('div');
-        
-        this.tooltipEl.className = 'lightning-tooltip';        
         this.tooltipEl.innerHTML = label;
-        this.tooltipEl.style.left = (this.x(d.x) + this.margin.left - 50) + 'px';
-        this.tooltipEl.style.bottom = (this.height - this.y(d.y) + 20) + 'px';
+
+        var styles = {
+            left: (this.x(d.x) + this.margin.left - 50) + 'px',
+            bottom: (this.height - this.y(d.y) + d.s + 5) + 'px',
+            position: 'absolute',
+            backgroundColor: 'rgba(0, 0, 0, 0.65)',
+            textAlign: 'center',
+            color: 'white',
+            paddingTop: '5px',
+            paddingBottom: '5px',
+            fontSize: '12px',
+            borderRadius: '4px',
+            width: '100px',
+            zIndex: '999'
+        }
+        _.extend(this.tooltipEl.style, styles)
+
+
     },
 
     renderTooltip: function() {
-
         var container = this.qwery(this.selector + ' div')[0];
         if(this.tooltipEl && container) {
             container.appendChild(this.tooltipEl);
         }
-
     },
 
     showTooltip: function(d) {
-        if(!this.options.tooltips) {
-            return;
-        }
         this.buildTooltip(d);
         this.renderTooltip();
     },

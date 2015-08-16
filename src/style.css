@@ -76,16 +76,3 @@
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
 }
-
-.lightning-tooltip {
-    position: absolute;
-    background-color: rgba(0, 0, 0, 0.7);
-    text-align: center;
-    color: white;
-    padding-top: 5px;
-    padding-bottom: 5px;
-    font-size: 12px;
-    border-radius: 4px;
-    width: 100px;
-    z-index: 999;
-}
