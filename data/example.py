@@ -3,8 +3,8 @@ from numpy import random
 
 lgn = Lightning()
 
-x = random.randn(100) * 15
-y = random.randn(100) * 15
+x = random.randn(100)
+y = random.randn(100)
 group = (random.rand(100) * 5).astype('int')
 size = random.rand(100) * 20 + 5
 
