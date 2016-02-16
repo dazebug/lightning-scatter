@@ -476,7 +476,9 @@ var Visualization = LightningVisualization.extend({
     },
 
     renderTooltip: function() {
-        var container = this.qwery(this.selector + ' div')[0];
+        var container
+        if (typeof this.selector === 'string') container = this.qwery(this.selector + ' div')[0];
+        else container = this.selector.children[0];
         if(this.tooltipEl && container) {
             container.appendChild(this.tooltipEl);
         }
