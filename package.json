@@ -1,13 +1,14 @@
 {
-  "name": "lightning-scatter",
-  "version": "0.1.10",
+  "name": "lightning-scatter-regression",
+  "version": "0.0.1",
   "dependencies": {
     "brfs": "^1.4.0",
     "d3": "^3.5.5",
     "d3-multiaxis-zoom": "^1.0.4",
     "lightning-client-utils": "^0.7.5",
     "lightning-visualization": "^0.1.4",
-    "lodash": "^3.8.0"
+    "lodash": "^3.8.0",
+    "regression": "^1.2.1"
   },
   "keywords": [
     "lightning-visualization"
@@ -17,7 +18,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/lightning-viz/lightning-scatter.git"
+    "url": "git+https://github.com/dazebug/lightning-scatter-regression.git"
   },
   "browserify": {
     "transform": [
@@ -25,6 +26,6 @@
     ]
   },
   "lightning": {
-    "name": "scatter"
+    "name": "scatter-regression"
   }
 }

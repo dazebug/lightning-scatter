@@ -1,28 +1,28 @@
 @import url(http://fonts.googleapis.com/css?family=Open+Sans);
 
-.scatter-plot {
+.scatter-regression-plot {
     position: relative;
 }
 
-.scatter-plot.canvas {
+.scatter-regression-plot.canvas {
     position: absolute;
     pointer-events: all;
     z-index: 1;
 }
 
-.scatter-plot.svg {
+.scatter-regression-plot.svg {
     position: absolute;
     z-index: 0;
     pointer-events: none;
     -webkit-transform: translate3d(0,0,0);
 }
 
-.scatter-plot.rect {
+.scatter-regression-plot.rect {
     fill: #ffffff;
     z-index: 100;
 }
 
-.scatter-plot.brush-container {
+.scatter-regression-plot.brush-container {
     z-index : 1;
     pointer-events: none;
 }
@@ -36,43 +36,43 @@
     shape-rendering: crispEdges;
 }
 
-.scatter-plot .plot {
+.scatter-regression-plot .plot {
     fill: #ffffff;
 }
 
-.scatter-plot .grid .tick {
+.scatter-regression-plot .grid .tick {
     stroke: #BEC9CE;
     opacity: 0.6;
 }
 
-.scatter-plot .grid .path {
+.scatter-regression-plot .grid .path {
     stroke-width: 0;
 }
 
-.scatter-plot .axis path, .axis line {
+.scatter-regression-plot .axis path, .axis line {
     fill: none;
     stroke: none;
     shape-rendering: crispEdges;
 }
 
-.scatter-plot .axis path {
+.scatter-regression-plot .axis path {
     display: none;
 }
 
-.scatter-plot .line {
+.scatter-regression-plot .line {
     fill: none;
     stroke: #9175f0;
     stroke-width: 2px;
 }
 
-.scatter-plot text {
+.scatter-regression-plot text {
     fill: #A7A9AC;
     font-family: monospace;
     font-size: 14px;
     font-weight: normal;
 }
 
-.scatter-plot .label {
+.scatter-regression-plot .label {
     font-family: 'Open Sans', sans-serif;
     font-size: 16px;
 }

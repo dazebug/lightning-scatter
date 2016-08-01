@@ -6,6 +6,7 @@ var _ = require('lodash');
 var LightningVisualization = require('lightning-visualization');
 var fs = require('fs');
 var css = fs.readFileSync(__dirname + '/style.css');
+var regression = require('regression');
 
 var Visualization = LightningVisualization.extend({
 
@@ -87,7 +88,7 @@ var Visualization = LightningVisualization.extend({
 
         var canvas = container
             .append('canvas')
-            .attr('class', 'scatter-plot canvas')
+            .attr('class', 'scatter-regression-plot canvas')
             .attr('width', width - margin.left - margin.right)
             .attr('height', height - margin.top - margin.bottom)
             .style('margin-left', margin.left + 'px')
@@ -103,7 +104,7 @@ var Visualization = LightningVisualization.extend({
 
         var svg = container
             .append('svg:svg')
-            .attr('class', 'scatter-plot svg')
+            .attr('class', 'scatter-regression-plot svg')
             .attr('width', width)
             .attr('height', height)
             .append('svg:g')
@@ -120,7 +121,7 @@ var Visualization = LightningVisualization.extend({
         svg.append('rect')
             .attr('width', width - margin.left - margin.right)
             .attr('height', height - margin.top - margin.bottom)
-            .attr('class', 'scatter-plot rect');
+            .attr('class', 'scatter-regression-plot rect');
 
         // setup brushing
         if (options.brush) {
@@ -173,7 +174,7 @@ var Visualization = LightningVisualization.extend({
 
             container
                 .append('svg:svg')
-                .attr('class', 'scatter-plot brush-container')
+                .attr('class', 'scatter-regression-plot brush-container')
                 .attr('width', width + margin.left + margin.right)
                 .attr('height', height + margin.top + margin.bottom)
                 .append('g')
@@ -284,6 +285,7 @@ var Visualization = LightningVisualization.extend({
             ctx.clearRect(0, 0, width + margin.left + margin.right, height + margin.top + margin.bottom);
             draw()
         }
+	// modified version of http://bl.ocks.org/benvandyke/8459843
 
         function draw() {
 
@@ -319,6 +321,21 @@ var Visualization = LightningVisualization.extend({
             if(options.tooltips && highlighted.length) {
                 self.showTooltip(self.data.points[highlighted[0]]);
             }
+	    console.log(data.leastSquaresCoeff)
+		var x1 = xDomain[0];
+		var slope = self.data.leastSquaresCoeff[0]
+		var intercept = self.data.leastSquaresCoeff[1]
+		var y1 = intercept + slope * x1;
+		var x2 = xDomain[1];
+		var y2 = intercept + slope * x2;
+		var trendData = [x1,y1,x2,y2];
+
+	    ctx.beginPath();
+	    ctx.moveTo(self.x(trendData[0]), self.y(trendData[1]));
+	    ctx.lineTo(self.x(trendData[2]), self.y(trendData[3]));
+	    ctx.stroke();
+
+
         }
 
         function updateAxis() {
@@ -403,6 +420,8 @@ var Visualization = LightningVisualization.extend({
 
         var c, s, a;
 
+	data.leastSquaresCoeff = regression('linear', data.points).equation
+
         data.points = data.points.map(function(d, i) {
             d.x = d[0];
             d.y = d[1];
@@ -417,6 +436,7 @@ var Visualization = LightningVisualization.extend({
             d.l = (data.labels || []).length > i ? data.labels[i] : null;
             return d;
         });
+
 
         return data
 
