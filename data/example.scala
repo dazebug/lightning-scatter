@@ -1,11 +1,8 @@
 import org.viz.lightning._
-import scala.util.Random
 
 val lgn = Lightning()
 
-val x = Array.fill(100)(Random.nextFloat())
-val y = Array.fill(100)(Random.nextFloat())
-val group = Array.fill(100)(Random.nextFloat() * 5).map(_.toInt)
-val size = Array.fill(100)(Random.nextFloat() * 20 + 5)
+val r = scala.util.Random
+val points = (0 to 10).map(i => Array(i + r.nextDouble - 0.5, i + r.nextDouble - 0.5)) // y = x + noise
 
-lgn.scatter(x, y, group=group, size=size)
+lgn.plot("scatter-regression", Map("points" -> points))
